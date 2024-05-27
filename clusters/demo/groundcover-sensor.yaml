@@ -31,3 +31,11 @@ spec:
     commitHashKeyName: app.kubernetes.io/version
     custom-metrics:
       enabled: true
+    tracesNamespaceFilters:
+      - matchType: block
+        regex: flux-system
+      - matchType: block
+        regex: kube-system
+    logsDropFilters:
+      - '{namespace="flux-system"}'
+      - '{namespace="kube-system"}'
