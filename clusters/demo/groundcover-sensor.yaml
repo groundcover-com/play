@@ -11,6 +11,8 @@ spec:
       groundcoverPredefinedTokenSecret:
         secretKey: API_KEY
         secretName: groundcover-api-key
+      telemetry:
+        enabled: false
     agent:
       alligator:
         env:
