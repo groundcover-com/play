@@ -1,0 +1,25 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: opentelemetry-demo
+  namespace: flux-system
+spec:
+  timeout: 5m
+  interval: 5m
+  releaseName: opentelemetry-demo
+  targetNamespace: opentelemetry-demo
+  storageNamespace: opentelemetry-demo
+  install:
+    createNamespace: true
+    remediation:
+      retries: 1
+  upgrade:
+    remediation:
+      retries: 1
+  chart:
+    spec:
+      chart: opentelemetry-demo
+      sourceRef:
+        kind: HelmRepository
+        name: opentelemetry-demo
+        namespace: flux-system

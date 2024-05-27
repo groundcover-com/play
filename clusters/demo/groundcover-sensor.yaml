@@ -1,0 +1,33 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: groundcover-sensor
+  namespace: flux-system
+spec:
+  values:
+    global:
+      ingress:
+        site: ingest.play.groundcover.com
+      groundcoverPredefinedTokenSecret:
+        secretKey: API_KEY
+        secretName: groundcover-api-key
+    agent:
+      alligator:
+        env:
+          - name: GC_GLOBALLIMITER_SAMPLEEVERYTHING
+            value: "true"
+          - name: GC_REDISHANDLER_SAMPLINGMODE
+            value: "2"
+        repository: alligator
+        resources:
+          limits:
+            cpu: 800m
+            memory: 700Mi
+          requests:
+            cpu: 160m
+            memory: 300Mi
+    clusterId: demo
+    repositoryUrlKeyName: app.kubernetes.io/repo
+    commitHashKeyName: app.kubernetes.io/version
+    custom-metrics:
+      enabled: true
