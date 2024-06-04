@@ -1,0 +1,13 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: opentelemetry-demo
+  namespace: flux-system
+spec:
+  values:
+    opentelemetry-collector:
+      enabled: false
+    default:
+      envOverrides:
+        - name: OTEL_COLLECTOR_NAME
+          value: groundcover-alligator.groundcover.svc.cluster.local

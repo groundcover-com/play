@@ -1,0 +1,32 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: groundcover-sensor
+  namespace: flux-system
+spec:
+  timeout: 5m
+  interval: 5m
+  releaseName: groundcover
+  targetNamespace: groundcover
+  storageNamespace: groundcover
+  install:
+    crds: Skip
+    createNamespace: true
+    remediation:
+      retries: 1
+  upgrade:
+    remediation:
+      retries: 1
+    crds: Skip
+  chart:
+    spec:
+      version: ~> 1
+      chart: groundcover
+      sourceRef:
+        kind: HelmRepository
+        name: groundcover-sensor
+        namespace: flux-system
+  values:
+    global:
+      backend:
+        enabled: false
