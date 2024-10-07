@@ -14,13 +14,13 @@ spec:
       telemetry:
         enabled: false
     agent:
-      alligator:
+      sensor:
         env:
           - name: GC_GLOBALLIMITER_SAMPLEEVERYTHING
             value: "true"
           - name: GC_REDISHANDLER_SAMPLINGMODE
             value: "2"
-        repository: alligator
+        repository: sensor
         resources:
           limits:
             cpu: 800m
