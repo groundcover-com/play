@@ -10,4 +10,4 @@ spec:
     default:
       envOverrides:
         - name: OTEL_COLLECTOR_NAME
-          value: groundcover-alligator.groundcover.svc.cluster.local
+          value: groundcover-sensor.groundcover.svc.cluster.local
