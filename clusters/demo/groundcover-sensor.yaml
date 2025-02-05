@@ -43,3 +43,7 @@ spec:
       - '{namespace="kube-system"}'
     dropRunningNamespaceLogs: true
     shouldDropRunningNamespaces: true
+    k8sWatcher:
+      watch:
+        secret:
+          enabled: false
