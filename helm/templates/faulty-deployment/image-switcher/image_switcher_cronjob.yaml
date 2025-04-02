@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: image-switcher
+  namespace: {{ .Values.faultyDeployment.namespace }} 
+spec:
+  schedule: "0 */3 * * *" # Runs every 3 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: image-switcher
+            image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/image-switcher:{{ .Values.tag }}
+            imagePullPolicy: Always  # Ensures the image is always pulled
+            env:
+              - name: CONFIG_PATH
+                value: "/etc/image-switcher/config.yaml"
+              - name: NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+            volumeMounts:
+              - name: config-volume
+                mountPath: /etc/image-switcher
+          restartPolicy: OnFailure
+          volumes:
+          - name: config-volume
+            configMap:
+              name: image-switcher-config
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: image-switcher-role
+  namespace: {{ .Values.faultyDeployment.namespace }} 
+rules:
+  - apiGroups: ["apps"] # Access to deployment resources
+    resources: ["deployments"]
+    verbs: ["get", "update"]
+  - apiGroups: [""] # Access to pod logs or other basic resources (optional)
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: image-switcher-rolebinding
+  namespace: {{ .Values.faultyDeployment.namespace }} 
+subjects:
+  - kind: ServiceAccount
+    name: default # Replace with the name of the service account your CronJob or Pod uses
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: image-switcher-role

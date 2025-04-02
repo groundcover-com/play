@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: news-reader
+  namespace: {{ .Values.noisyNeighbor.namespace }} 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news-reader
+  template:
+    metadata:
+      labels:
+        app: news-reader
+    spec:
+      containers:
+      - name: news-reader
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/news-reader:{{ .Values.tag }}
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+          requests:
+            cpu: "250m"
+            memory: "128Mi"

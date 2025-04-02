@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-rds-{{ .Release.Revision }}
+  namespace: {{ .Values.slowSql.namespace }}   
+spec:
+  template:
+    spec:
+      containers:
+      - name: seed-db
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/seed-db:{{ .Values.tag }}
+        imagePullPolicy: Always
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password
+        - name: DB_NAME
+          value: demo
+        - name: DB_HOST
+          value: demo.cc1802as6snm.us-east-1.rds.amazonaws.com
+        - name: DB_PORT
+          value: "5432"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+      restartPolicy: Never
+  backoffLimit: 1

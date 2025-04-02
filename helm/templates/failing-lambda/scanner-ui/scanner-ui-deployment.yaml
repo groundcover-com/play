@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scanner-ui
+  namespace: {{ .Values.failingLambda.namespace }}
+  labels:
+    app: scanner-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scanner-ui
+  template:
+    metadata:
+      labels:
+        app: scanner-ui
+    spec:
+      containers:
+      - name: scanner-ui
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/scanner-ui:{{ .Values.tag }}
+        imagePullPolicy: Always  # Ensures the image is always pulled

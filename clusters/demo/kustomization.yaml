@@ -3,6 +3,10 @@ kind: Kustomization
 resources:
   - ../../apps/base/opentelemetry-demo
   - ../../apps/base/groundcover-sensor
+  - ../../apps/base/karpenter
+  - ../../apps/base/karpenter-spec
+  - ../../apps/base/namespaces  
+  - ../../apps/base/demo-apps
 patches:
   - path: opentelemetry-demo.yaml
   - path: groundcover-sensor.yaml

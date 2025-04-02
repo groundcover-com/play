@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporter
+  namespace: {{ .Values.faultyDeployment.namespace }} 
+  labels:
+    app: reporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reporter
+  template:
+    metadata:
+      labels:
+        app: reporter
+    spec:
+      containers:
+      - name: reporter
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/reporter:{{ .Values.tag }}
+        imagePullPolicy: Always  # Ensures the image is always pulled
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporter
+  namespace: {{ .Values.faultyDeployment.namespace }} 
+spec:
+  selector:
+    app: reporter
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080

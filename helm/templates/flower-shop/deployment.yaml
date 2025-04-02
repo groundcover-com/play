@@ -1,0 +1,433 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  serviceName: mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:6
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "{{ .Values.flowerShop.mongodb.username }}"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "{{ .Values.flowerShop.mongodb.password }}"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint-with-scheme" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "mongodb"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_always_on"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+    spec:
+      containers:
+      - name: catalog-service
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/catalog-service:{{ .Values.tag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint-with-scheme" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "catalog-service"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_always_on"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: MONGODB_URI
+          value: "mongodb://{{ .Values.flowerShop.mongodb.username }}:{{ .Values.flowerShop.mongodb.password }}@mongodb:27017"
+        - name: MONGODB_DATABASE
+          value: "flower_shop"
+        - name: MONGODB_COLLECTION
+          value: "flowers"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: catalog-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shop-service
+  template:
+    metadata:
+      labels:
+        app: shop-service
+    spec:
+      containers:
+      - name: shop-service
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/shop-service:{{ .Values.tag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint-with-scheme" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "shop-service"
+        - name: CATALOG_SERVICE_URL
+          value: "http://catalog-service:8000"
+        - name: ORDER_SERVICE_URL
+          value: "http://order-service:8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: shop-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client-service
+  template:
+    metadata:
+      labels:
+        app: client-service
+    spec:
+      containers:
+      - name: client-service
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/client-service:{{ .Values.tag }}
+        imagePullPolicy: Always
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint-with-scheme" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "client-service"
+        - name: SHOP_SERVICE_URL
+          value: "http://shop-service:3000"
+        - name: REQUEST_INTERVAL
+          value: "{{ .Values.flowerShop.clientRequestInterval | default 5000 }}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint-with-scheme" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "redis"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_always_on"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      initContainers:
+      - name: init-chmod-data
+        image: busybox
+        command: ["sh", "-c", "chmod -R 777 /var/lib/postgresql/data"]
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: flower_shop
+        - name: POSTGRES_USER
+          value: flower_shop
+        - name: POSTGRES_PASSWORD
+          value: flower_shop
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_INITDB_ARGS
+          value: "--data-checksums"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: order-service
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/order-service:{{ .Values.tag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "order-service"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_always_on"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: POSTGRES_HOST
+          value: "postgres"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: "flower_shop"
+        - name: POSTGRES_PASSWORD
+          value: "flower_shop"
+        - name: POSTGRES_DB
+          value: "flower_shop"
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: OTEL_LOG_LEVEL
+          value: "DEBUG"
+        - name: POSTGRES_USE_UNLOGGED_TABLE
+          value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 8080
+    targetPort: 8080 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-service
+  namespace: {{ .Values.flowerShop.namespace }}
+  labels:
+    app: flower-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flower-shop
+      component: ui-service
+  template:
+    metadata:
+      labels:
+        app: flower-shop
+        component: ui-service
+    spec:
+      containers:
+      - name: ui-service
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/ui-service:{{ .Values.tag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: SHOP_SERVICE_URL
+          value: "http://shop-service:3000"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ include "otel-exporter-endpoint-with-scheme" . }}"
+        - name: OTEL_SERVICE_NAME
+          value: "ui-service"
+        - name: GROUNDCOVER_CLUSTER
+          value: "rum"
+        - name: GROUNDCOVER_ENVIRONMENT
+          value: "rum"
+        - name: GROUNDCOVER_APP_ID
+          value: "demo"
+        - name: GROUNDCOVER_DSN
+          value: "https://ingest.play.groundcover.com"
+        - name: GROUNDCOVER_API_KEY
+          value: "qIyMPUHeE8IWGtx6258h488irYasKTpY"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-service
+  namespace: {{ .Values.flowerShop.namespace }}
+spec:
+  selector:
+    app: flower-shop
+    component: ui-service
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer 

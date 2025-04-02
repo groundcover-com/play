@@ -1,0 +1,68 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: karpenter
+  namespace: flux-system
+spec:
+  releaseName: karpenter
+  targetNamespace: karpenter
+  storageNamespace: karpenter
+  chart:
+    spec:
+      chart: karpenter
+      version: 1.0.3
+      sourceRef:
+        kind: HelmRepository
+        name: karpenter
+        namespace: flux-system
+  interval: 5m
+  timeout: 15m
+  install:
+    crds: CreateReplace
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    replicas: 1
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution: null
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 50
+          preference:
+            matchExpressions:
+            - key: node-role
+              operator: In
+              values:
+              - "infrastructure"
+        - weight: 49
+          preference:
+            matchExpressions:
+              - key: karpenter.sh/nodepool
+                operator: DoesNotExist
+      podAntiAffinity: 
+        requiredDuringSchedulingIgnoredDuringExecution: []
+    tolerations:
+    - key: "infrastructure"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    controller:
+      resources:
+        limits:
+          memory: 500Mi
+        requests:
+          cpu: 80m
+          memory: 300Mi
+    serviceAccount:
+      annotations:
+        eks.amazonaws.com/role-arn: "arn:aws:iam::637423247681:role/demo-karpenter-sa"
+    settings:
+      clusterName: "demo"

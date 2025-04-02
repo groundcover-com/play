@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scan-portal
+  namespace: {{ .Values.failingLambda.namespace }}
+  labels:
+    app: scan-portal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scan-portal
+  template:
+    metadata:
+      labels:
+        app: scan-portal
+      annotations:
+        groundcover/force-sample: "true"
+    spec:
+      serviceAccountName: cloud-scanner-service-account
+      automountServiceAccountToken: false
+      containers:
+      - name: scan-portal
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/scan-portal:{{ .Values.tag }}
+        imagePullPolicy: Always  # Ensures the image is always pulled
+        ports:
+        - containerPort: 8080
+        env:
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: CLOUD_SCANNER_LAMBDA_NAME
+          value: "cloud_scanner"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scan-portal
+  namespace: {{ .Values.failingLambda.namespace }}  
+spec:
+  selector:
+    app: scan-portal
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloud-scanner-service-account
+  namespace: {{ .Values.failingLambda.namespace }}  
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::637423247681:role/demo-lambda-scenario-sa

@@ -1,0 +1,141 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: karpenter-spec
+  namespace: flux-system
+spec:
+  releaseName: karpenter-spec
+  targetNamespace: karpenter
+  storageNamespace: karpenter
+  dependsOn: 
+  - name: karpenter
+  chart:
+    spec:
+      chart: karpenter-spec
+      sourceRef:
+        kind: HelmRepository
+        name: karpenter-spec
+        namespace: flux-system
+      version: 1.8.239
+  interval: 5m
+  timeout: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    nodePools:
+      default:     
+        disruption:
+          consolidateAfter: "5m"
+          consolidationPolicy: WhenEmptyOrUnderutilized
+          budgets:
+          - nodes: 100%
+            reasons:
+            - Empty
+            - Drifted
+            - Underutilized
+      mission-critical:
+        ec2NodeClass: default
+        disruption:
+          consolidateAfter: "5m"
+          consolidationPolicy: WhenEmptyOrUnderutilized
+          budgets:
+          - nodes: 100%
+            reasons:
+            - Empty
+            - Drifted
+            - Underutilized
+        limits:
+          cpu: 
+          memory: 
+        weight: 
+        nodeAnnotations:
+        startupTaints:
+        expireAfter:
+        terminationGracePeriod: 
+        instanceCategories: 
+          operator: 
+          values: []
+        instanceFamily:
+          operator: 
+          values: []
+        instanceCpu:
+          operator: In
+          values: ["4"]
+        instanceHypervisor:
+          operator: 
+          values: []
+        instanceGeneration:
+          operator: 
+          values: []
+        instanceZone:
+          operator: 
+          values: []
+        instanceArch:
+          operator: 
+          values: []
+        capacityType:
+          operator: 
+          values: []
+        instanceMemory:
+          operator:
+          values: []
+        instanceType:
+          operator:
+          values: []
+        windowsBuild:
+          operator:
+          values: []
+        os:
+          operator:
+          values: []
+        encryptionInTransit:
+          operator:
+          values: []
+        size:
+          operator:
+          values: []
+        cpuManufacturer:
+          operator:
+          values: []
+        ebsBandwith:
+          operator:
+          values: []
+        networkBandwith:
+          operator:
+          values: []
+        pods:
+          operator:
+          values: []
+        gpuName:
+          operator:
+          values: []
+        gpuManufacturer:
+          operator:
+          values: []
+        gpuCount:
+          operator:
+          values: []
+        gpuMemory:
+          operator:
+          values: []
+        localNvme:
+          operator:
+          values: []
+        taints:
+        - key: "mission-critical"
+          effect: "NoSchedule"
+        nodeLabels:
+          mission-critical: "true"
+    infrastructure:
+      role: "demo-KarpenterNodesRole"
+      securityGroupIds:
+      - "sg-0f485503c9700d801"
+      subnetIds:
+      - "subnet-07ec29d3871b9f6b2"
+      - "subnet-0cc43f85e90fe250d"

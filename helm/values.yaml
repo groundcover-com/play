@@ -1,0 +1,21 @@
+tag: latest
+
+failingLambda:
+  namespace: scanner
+
+faultyDeployment:
+  namespace: task-generator
+
+noisyNeighbor:
+  namespace: news
+
+slowSql:
+  namespace: chat
+
+flowerShop:
+  namespace: flower-shop
+  otelExporterAddress: groundcover-sensor.groundcover-sensor.svc.cluster.local:4317
+  clientRequestInterval: 5000  # milliseconds between requests
+  mongodb:
+    username: admin
+    password: admin123

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-service
+  namespace: {{ .Values.noisyNeighbor.namespace }} 
+  labels:
+    app: backup-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backup-service
+  template:
+    metadata:
+      labels:
+        app: backup-service
+    spec:
+      nodeSelector:
+        mission-critical: "true"  # Ensure this matches the taint on the nodes
+      tolerations:
+        - key: "mission-critical"
+          operator: "Exists"
+          effect: "NoSchedule"
+      volumes:
+      - name: backup-flag
+        hostPath:
+          path: /tmp/backup-flag # directory location on host
+      containers:
+      - name: backup-service
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/backup-service:{{ .Values.tag }}
+        imagePullPolicy: Always  # Ensures the image is always pulled
+        resources:
+          requests:
+            cpu: "200m"
+        env:
+        - name: WORK_TIME_SECONDS
+          value: "300"
+        - name: INTERVAL_SECONDS
+          value: "3600"
+        - name: WORKERS_COUNT
+          value: "100"
+        volumeMounts:
+        - mountPath: /tmp/backup-flag
+          name: backup-flag
