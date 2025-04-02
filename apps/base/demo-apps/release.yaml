@@ -1,0 +1,31 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: demo-apps
+  namespace: flux-system
+spec:
+  releaseName: demo-apps
+  targetNamespace: flux-system
+  storageNamespace: flux-system
+  dependsOn: 
+  - name: karpenter-spec
+  chart:
+    spec:
+      chart: helm/
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: play-demo
+        namespace: flux-system
+  interval: 3m
+  timeout: 2m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    tag: latest

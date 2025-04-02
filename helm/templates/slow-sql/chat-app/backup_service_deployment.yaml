@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-app
+  namespace: {{ .Values.slowSql.namespace }}
+  labels:
+    app: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-app
+  template:
+    metadata:
+      labels:
+        app: chat-app
+    spec:
+      containers:
+      - name: chat-app
+        image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/chat-app:{{ .Values.tag }}
+        imagePullPolicy: Always  # Ensures the image is always pulled

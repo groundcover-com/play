@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-switcher-config
+  namespace: {{ .Values.faultyDeployment.namespace }} 
+data:
+  config.yaml: |
+    services:
+      integration-service:
+        container: "integration-service"
+        deployment: "integration-service"
+        images:
+          - fullPath: "637423247681.dkr.ecr.us-east-1.amazonaws.com/integration-service:v1"
+            workingHours:
+            #  start: "08:00"
+          - fullPath: "637423247681.dkr.ecr.us-east-1.amazonaws.com/integration-service:v2"
+            workingHours:
+            #  start: "16:00"

@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: automation-service
+  namespace: {{ .Values.flowerShop.namespace }} 
+spec:
+  schedule: "*/3 * * * *" # Runs every 3 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: automation-service
+            image: 637423247681.dkr.ecr.us-east-1.amazonaws.com/automation-service:{{ .Values.tag }}
+            imagePullPolicy: Always  # Ensures the image is always pulled
+            env:
+              - name: UI_SERVICE_URL
+                value: "http://ui-service:80"
+          restartPolicy: OnFailure
