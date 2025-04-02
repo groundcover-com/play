@@ -133,7 +133,7 @@ spec:
         nodeLabels:
           mission-critical: "true"
     infrastructure:
-      role: "demo-KarpenterNodesRole"
+      role: "play-demo-KarpenterNodesRole"
       securityGroupIds:
       - "sg-0f485503c9700d801"
       subnetIds:
