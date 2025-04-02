@@ -14,7 +14,7 @@ slowSql:
 
 flowerShop:
   namespace: flower-shop
-  otelExporterAddress: groundcover-sensor.groundcover-sensor.svc.cluster.local:4317
+  otelExporterAddress: groundcover-sensor.groundcover.svc.cluster.local:4317
   clientRequestInterval: 5000  # milliseconds between requests
   mongodb:
     username: admin
