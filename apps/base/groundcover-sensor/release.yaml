@@ -30,3 +30,40 @@ spec:
     global:
       backend:
         enabled: false
+    agent:
+      sensor:
+        headersForceSampling:
+          w3cForceSample: true
+        apmIngestor:
+          otel:
+            direct:
+              samplingRatio: 1
+        sensitiveHeadersObfuscationConfig:
+          specificKeys:
+            [
+              "Authorization",
+              "Proxy-Authorization",
+              "X-Amz-Security-Token",
+              "X-Amz-Credential",
+              "X-Amz-Firehose-Access-Key",
+              "apikey",
+            ]
+    vector:
+      tracesPipeline:
+        extraSteps: 
+        - name: obfuscateAWSServers
+          transform:
+            type: remap
+            source: |-
+              if string!(.http_host) == "iam.amazonaws.com" || string!(.http_host) == "ec2.us-east-1.amazonaws.com" || string!(.http_host) == "sts.us-east-1.amazonaws.com" || string!(.http_host) == "ssm.us-east-1.amazonaws.com" {
+                .request_body = "<REDACTED>"
+                .response_body = "<REDACTED>"
+              }
+    ottlRules:
+    - ruleName: "obfuscate-vmagent-apikey"
+      statements:
+        - 'replace_pattern(body, "apikey:[^\\s]*(\\s?)", "apikey:<REDACTED>\"")'
+      conditions:
+        - 'container_name == "victoria-metrics-agent"'
+      errorMode: "propagate"
+      logicOperator: "or"
