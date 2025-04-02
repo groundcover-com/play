@@ -1,8 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ../../../../scenarios/faulty-deployment/namespace.yaml
-  - ../../../../scenarios/noisy-neighbor/namespace.yaml
-  - ../../../../scenarios/failing-lambda/namespace.yaml
-  - ../../../../scenarios/slow-sql/namespace.yaml
-  - ../../../../scenarios/flower-shop/namespace.yaml
