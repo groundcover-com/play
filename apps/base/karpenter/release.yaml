@@ -65,4 +65,4 @@ spec:
       annotations:
         eks.amazonaws.com/role-arn: "arn:aws:iam::637423247681:role/play-demo-karpenter-sa"
     settings:
-      clusterName: "demo"
+      clusterName: "play-demo"
