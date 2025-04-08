@@ -401,7 +401,7 @@ spec:
         - name: OTEL_SERVICE_NAME
           value: "ui-service"
         - name: GROUNDCOVER_CLUSTER
-          value: "demo"
+          value: "none"
         - name: GROUNDCOVER_ENVIRONMENT
           value: "rum"
         - name: GROUNDCOVER_APP_ID
