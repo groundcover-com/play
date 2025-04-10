@@ -28,7 +28,8 @@ spec:
           requests:
             cpu: 160m
             memory: 300Mi
-    clusterId: demo
+    clusterId: "k8s - demo"
+    env: "aws - eks"
     repositoryUrlKeyName: app.kubernetes.io/repo
     commitHashKeyName: app.kubernetes.io/version
     custom-metrics:
